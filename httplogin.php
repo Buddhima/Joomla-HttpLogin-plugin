@@ -1,28 +1,41 @@
 <?php
-defined( '_JEXEC' ) or die( 'Restricted access' );
 
 /**
- * @version    2.5.0
+ * @version    1.0.0
  * @copyright  Copyright (C) 2013 Buddhima Wijeweera. All rights reserved.
- * @license    GNU/GPL
+ * @license    GNU General Public License version 2 or later; see LICENSE
  * @autor      Buddhima Wijeweera
- * 
  *
-*/
+ *
+ */
+
+defined('_JEXEC') or die('Restricted access');
 
 jimport('joomla.plugin.plugin');
 
-
+/**
+ * Plugin for bypass login window in Joomla - Both front-end and back-end
+ *  
+ * 
+ */
 class plgSystemHttplogin extends JPlugin
 {
 
+	/**
+	 * Activated after Initialise method in the execution cycle
+	 */
 	function onAfterInitialise()
 	{
-		if ($this->params->get('authmethod','1')==='0') {
+		if ($this->params->get('authmethod', '1') === '0')
+		{
 			$result = $this->basicAuthLogin();
-		} else if ($this->params->get('authmethod','1')==='1'){
+		}
+		elseif ($this->params->get('authmethod', '1') === '1')
+		{
 			$result = $this->encryptedLogin();
-		}else if ($this->params->get('authmethod','1')==='2'){
+		}
+		elseif ($this->params->get('authmethod', '1') === '2')
+		{
 			$result = $this->plainTextLogin();
 		}
 
@@ -37,23 +50,28 @@ class plgSystemHttplogin extends JPlugin
 		// Get the application object.
 		$app = JFactory::getApplication();
 
-		if(isset($_SERVER['PHP_AUTH_USER'])&&isset($_SERVER['PHP_AUTH_PW']))
+		if (isset($_SERVER['PHP_AUTH_USER'])&&isset($_SERVER['PHP_AUTH_PW']))
 		{
-		// Get the log in credentials.
-		$credentials = array();
-		$credentials['username'] = $_SERVER['PHP_AUTH_USER'];
-		$credentials['password'] = $_SERVER['PHP_AUTH_PW'];
+			// Get the log in credentials.
+			$credentials = array();
+			$credentials['username'] = $_SERVER['PHP_AUTH_USER'];
+			$credentials['password'] = $_SERVER['PHP_AUTH_PW'];
 
-		//if(!empty($credentials['username']) && !empty($credentials['password']))
-		
-			$options = array();
-			$result = $app->login($credentials, $options);
+			try
+			{
 
-			// if OK go to redirect page
-			if ($this->params->get('redirect', null)) {
-				if (!JError::isError($result)) {
+				$options = array();
+				$result = $app->login($credentials, $options);
+
+				// If OK go to redirect page
+				if ($this->params->get('redirect', null))
+				{
 					$app->redirect($this->params->get('redirect', null));
 				}
+			}
+			catch (Exception $e)
+			{
+				echo 'Error: ' . $e->getMessage();
 			}
 		}
 		return;
@@ -67,39 +85,43 @@ class plgSystemHttplogin extends JPlugin
 	{
 		// Get the application object.
 		$app = JFactory::getApplication();
-		$input=$app->input;
-		
+		$input = $app->input;
+
 		// Get all headers in HTTP request
-		$headers=getallheaders();
-				
-		if(!empty($headers['Joomla-User']) && !empty($headers['Joomla-Password'])){
-			
+		$headers = getallheaders();
+
+		if (!empty($headers['Joomla-User']) && !empty($headers['Joomla-Password']))
+		{
+
 			// Filterout Jomla User Name and Joomla Password from headers
-			$user=$headers['Joomla-User'];
-			$password=$headers['Joomla-Password'];
-			
-			$db =& JFactory::getDbo();
-			$query=$db->getQuery(true);
+			$user = $headers['Joomla-User'];
+			$password = $headers['Joomla-Password'];
+
+			$db = JFactory::getDbo();
+			$query = $db->getQuery(true);
 			$query->select(array('id', 'username', 'password'));
 			$query->from('#__users');
-			$query->where(array('username = '.$db->Quote( $user ), 'password = '.$db->Quote( $password )));
-			
-			$db->setQuery( $query );
+			$query->where(array('username = ' . $db->Quote($user), 'password = ' . $db->Quote($password)));
+
+			$db->setQuery($query);
 			$result = $db->loadObject();
 
-			if($result) {
+			if ($result)
+			{
 				JPluginHelper::importPlugin('user');
 
 				$options = array();
 				$options['action'] = 'core.login.site';
 
 				$response->username = $result->username;
-				$result = $app->triggerEvent('onUserLogin', array((array)$response, $options));
+				$result = $app->triggerEvent('onUserLogin', array((array) $response, $options));
 			}
 
-			// if OK go to redirect page
-			if ($this->params->get('redirect')) {
-				if ($result) {
+			// If OK go to redirect page
+			if ($this->params->get('redirect'))
+			{
+				if ($result)
+				{
 					$app->redirect($this->params->get('redirect'));
 				}
 			}
@@ -114,30 +136,37 @@ class plgSystemHttplogin extends JPlugin
 	{
 		// Get the application object.
 		$app = JFactory::getApplication();
-		$input=$app->input;
+		$input = $app->input;
 
 		// Get the log in credentials.
 		$credentials = array();
 		$credentials['username'] = $input->get('user');
 		$credentials['password'] = $input->get('password');
 
-		if(!empty($credentials['username']) && !empty($credentials['password']))
+		if (!empty($credentials['username']) && !empty($credentials['password']))
 		{
+			try
+			{
+				$options = array();
+				$result = $app->login($credentials, $options);
 
-			$options = array();
-			$result = $app->login($credentials, $options);
-
-			// if OK go to redirect page
-			if ($this->params->get('redirect', null)) {
-				if (!JError::isError($result)) {
-					$app->redirect($this->params->get('redirect', null));
+				// If OK go to redirect page
+				if ($this->params->get('redirect', null))
+				{
+					if (!JError::isError($result))
+					{
+						$app->redirect($this->params->get('redirect', null));
+					}
 				}
+			}
+			catch (Exception $e)
+			{
+				echo 'Error: ' . $e->getMessage();
 			}
 
 		}
 
 		return;
 	}
-	
-	
+
 }
