@@ -38,6 +38,10 @@ class plgSystemHttplogin extends JPlugin
 		{
 			$result = $this->plainTextLogin();
 		}
+		elseif ($this->params->get('authmethod', '1') === '3')
+		{
+			$result = $this->basicAuthEncryptedLogin();
+		}
 
 		return;
 	}
@@ -166,6 +170,59 @@ class plgSystemHttplogin extends JPlugin
 
 		}
 
+		return;
+	}
+	
+	/**
+	 * Login using md5 hashed password+salt through Basic HTTP Authentication
+	 * For internal usages (JFactory::getUser()->password , will return hashed_password_with_salt)
+	 * Then base64_encode (user_name : hashed_password_with_salt)
+	 */
+	function basicAuthEncryptedLogin()
+	{
+		// Get the application object.
+		$app = JFactory::getApplication();
+		$input = $app->input;
+
+		// Get all headers in HTTP request
+		$headers = getallheaders();
+
+		if (!empty($_SERVER['PHP_AUTH_USER'])&&isset($_SERVER['PHP_AUTH_PW']))
+		{
+
+			// Filterout Jomla User Name and Joomla Password from headers
+			$user = $_SERVER['PHP_AUTH_USER'];
+			$password = $_SERVER['PHP_AUTH_PW'];
+
+			$db = JFactory::getDbo();
+			$query = $db->getQuery(true);
+			$query->select(array('id', 'username', 'password'));
+			$query->from('#__users');
+			$query->where(array('username = ' . $db->Quote($user), 'password = ' . $db->Quote($password)));
+
+			$db->setQuery($query);
+			$result = $db->loadObject();
+
+			if ($result)
+			{
+				JPluginHelper::importPlugin('user');
+
+				$options = array();
+				$options['action'] = 'core.login.site';
+
+				$response->username = $result->username;
+				$result = $app->triggerEvent('onUserLogin', array((array) $response, $options));
+			}
+
+			// If OK go to redirect page
+			if ($this->params->get('redirect'))
+			{
+				if ($result)
+				{
+					$app->redirect($this->params->get('redirect'));
+				}
+			}
+		}
 		return;
 	}
 

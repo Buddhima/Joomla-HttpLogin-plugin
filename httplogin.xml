@@ -18,6 +18,7 @@
 				<option value="0">Basic HTTP Authentication</option>
 				<option value="1">MD5 Hashed with Salt</option>
 				<option value="2">Plain Text</option>
+				<option value="3">Basic HTTP Authentication with Hashed Password</option>
 			</field><field name="redirect" type="text" default="" label="URL to redirect after user logged (if required)" description="After a user logged in, page wil be directed to this page"/>
 			
 		</fieldset>
