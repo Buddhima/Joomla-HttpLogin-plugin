@@ -91,7 +91,7 @@ class plgSystemHttplogin extends JPlugin
 		$app = JFactory::getApplication();
 		$input = $app->input;
 
-		// Get all headers in HTTP request
+		// Get all headers in HTTP request - under Apache
 		$headers = getallheaders();
 
 		if (!empty($headers['Joomla-User']) && !empty($headers['Joomla-Password']))
@@ -182,10 +182,6 @@ class plgSystemHttplogin extends JPlugin
 	{
 		// Get the application object.
 		$app = JFactory::getApplication();
-		$input = $app->input;
-
-		// Get all headers in HTTP request
-		$headers = getallheaders();
 
 		if (!empty($_SERVER['PHP_AUTH_USER'])&&isset($_SERVER['PHP_AUTH_PW']))
 		{
