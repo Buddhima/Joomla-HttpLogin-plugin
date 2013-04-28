@@ -11,7 +11,6 @@
 
 defined('_JEXEC') or die('Restricted access');
 
-jimport('joomla.plugin.plugin');
 
 /**
  * Plugin for bypass login window in Joomla - Both front-end and back-end
